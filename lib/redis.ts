@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { Order, Menu } from "@/types";
+import { Order, Menu, OrderSystemStatus } from "@/types";
 import { defaultMenu } from "./menu";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -10,6 +10,7 @@ const redis = new Redis({
 
 const ORDERS_KEY = "yemek-siparisler";
 const MENU_KEY = "yemek-menu";
+const ORDER_STATUS_KEY = "yemek-siparis-status";
 const TTL_SECONDS = 30 * 60; // 30 dakika (siparişler için)
 
 // ==================== SİPARİŞ FONKSİYONLARI ====================
@@ -107,6 +108,37 @@ export async function resetMenu(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Redis resetMenu error:", error);
+    return false;
+  }
+}
+
+// ==================== SİPARİŞ DURUMU FONKSİYONLARI ====================
+
+export async function getOrderStatus(): Promise<OrderSystemStatus> {
+  noStore();
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    return { isOpen: true };
+  }
+  try {
+    const status = await redis.get<OrderSystemStatus>(ORDER_STATUS_KEY);
+    return status || { isOpen: true };
+  } catch (error) {
+    console.error("Redis getOrderStatus error:", error);
+    return { isOpen: true };
+  }
+}
+
+export async function setOrderStatus(isOpen: boolean): Promise<boolean> {
+  noStore();
+  try {
+    const status: OrderSystemStatus = {
+      isOpen,
+      closedAt: isOpen ? undefined : Date.now(),
+    };
+    await redis.set(ORDER_STATUS_KEY, status);
+    return true;
+  } catch (error) {
+    console.error("Redis setOrderStatus error:", error);
     return false;
   }
 }

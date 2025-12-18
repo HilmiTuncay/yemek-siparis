@@ -118,3 +118,9 @@ export interface UserCompanyInfo {
   companyIban?: string;
   companyAccountHolder?: string;
 }
+
+// Sipariş sistemi durumu (açık/kapalı)
+export interface OrderSystemStatus {
+  isOpen: boolean;
+  closedAt?: number;
+}

@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, OrderItemSelection, UserCompanyInfo, PaymentStatus } from "@/types";
+import { Menu, OrderItemSelection, UserCompanyInfo, PaymentStatus, OrderSystemStatus } from "@/types";
 import RestaurantSection from "./RestaurantSection";
 import PaymentModal from "./PaymentModal";
 
 interface OrderFormProps {
   menu: Menu;
+  orderStatus?: OrderSystemStatus;
 }
 
 // localStorage key
 const USER_INFO_KEY = "yemek-siparis-user-info";
 
-export default function OrderForm({ menu }: OrderFormProps) {
+export default function OrderForm({ menu, orderStatus }: OrderFormProps) {
+  const isOrdersClosed = orderStatus && !orderStatus.isOpen;
   const [customerName, setCustomerName] = useState("");
   // selections: { [restaurantId]: { [productId]: OrderItemSelection } }
   const [selections, setSelections] = useState<Record<string, Record<string, OrderItemSelection>>>({});
@@ -168,18 +170,23 @@ export default function OrderForm({ menu }: OrderFormProps) {
     e.preventDefault();
     setMessage(null);
 
+    if (isOrdersClosed) {
+      setMessage({ type: "error", text: "Siparisler su an kapali!" });
+      return;
+    }
+
     if (!customerName.trim()) {
-      setMessage({ type: "error", text: "Lütfen isminizi girin" });
+      setMessage({ type: "error", text: "Lutfen isminizi girin" });
       return;
     }
 
     const items = getAllSelections();
     if (items.length === 0) {
-      setMessage({ type: "error", text: "En az bir ürün seçin" });
+      setMessage({ type: "error", text: "En az bir urun secin" });
       return;
     }
 
-    // Modal aç
+    // Modal ac
     setShowPaymentModal(true);
   };
 
@@ -242,10 +249,14 @@ export default function OrderForm({ menu }: OrderFormProps) {
             </div>
             <button
               type="submit"
-              disabled={loading || total === 0}
-              className="w-full sm:w-auto px-8 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
+              disabled={loading || total === 0 || isOrdersClosed}
+              className={`w-full sm:w-auto px-8 py-3 font-semibold rounded-lg transition-colors ${
+                isOrdersClosed
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white"
+              }`}
             >
-              {loading ? "Gönderiliyor..." : "Sipariş Ver"}
+              {loading ? "Gonderiliyor..." : isOrdersClosed ? "Siparisler Kapali" : "Siparis Ver"}
             </button>
           </div>
         </div>

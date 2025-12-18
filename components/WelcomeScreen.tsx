@@ -58,20 +58,20 @@ export default function WelcomeScreen({ onUnlock }: WelcomeScreenProps) {
       <div className="mb-8 rounded-2xl overflow-hidden shadow-2xl">
         <Image
           src="/hop.jpg"
-          alt="Yemek Siparişi"
-          width={300}
-          height={300}
+          alt="Yemek Siparisi"
+          width={600}
+          height={600}
           className="object-cover"
           priority
         />
       </div>
 
-      {/* Başlık */}
+      {/* Baslik */}
       <h1 className="text-3xl font-bold text-white mb-2 text-center">
-        Takım Yemek Siparişi
+        YZT Yemek Siparisi
       </h1>
       <p className="text-green-100 mb-8 text-center">
-        Devam etmek için şifreyi girin
+        Devam etmek icin sifreyi girin
       </p>
 
       {/* Şifre Formu */}
@@ -105,20 +105,13 @@ export default function WelcomeScreen({ onUnlock }: WelcomeScreenProps) {
         </button>
       </form>
 
-      {/* Alt Linkler */}
-      <div className="mt-8 flex gap-4">
+      {/* Alt Link */}
+      <div className="mt-8">
         <a
-          href="/siparisler"
+          href="/siparislerim"
           className="text-white/80 hover:text-white underline text-sm"
         >
-          Siparişleri Gör
-        </a>
-        <span className="text-white/50">|</span>
-        <a
-          href="/menu-duzenle"
-          className="text-white/80 hover:text-white underline text-sm"
-        >
-          Menüyü Düzenle
+          Siparislerime Git
         </a>
       </div>
     </div>

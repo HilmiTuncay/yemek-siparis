@@ -1,27 +1,53 @@
-# Tamamlanan Güncellemeler
+# Tamamlanan Guncellemeler
 
-## Son Güncelleme (Bu Oturum)
+## Son Guncelleme (Bu Oturum)
 
-### 1. hop.jpg Banner Olarak Düzenlendi
-- [x] Şifre ekranında banner (geniş) olarak gösteriliyor
-- [x] Ana sayfadan kaldırıldı (sadece şifre ekranında)
+### 1. Siparislerim Sayfasi
+- [x] Ana sayfadaki "Siparisleri Gor" -> "Siparislerim" olarak degistirildi
+- [x] Kisiye ozel siparisler gosteriliyor (localStorage'dan isim aliniyor)
+- [x] Siparisler acikken iptal edilebiliyor
+- [x] /siparislerim sayfasi eklendi
 
-### 2. İsim Kontrolü Başta Yapılıyor
-- [x] Sepete Ekle butonuna basınca isim kontrolü yapılıyor
-- [x] İsim boşsa uyarı gösteriliyor ve input'a focus
+### 2. Admin Paneli
+- [x] Sag alttaki "Menuyu Duzenle" butonu kaldirildi
+- [x] Sag uste "Admin" butonu eklendi
+- [x] Admin butonuna tiklaninca sifre ekrani geliyor
+- [x] Admin panelinde: Genel Siparisler, Menuyu Duzenle, Siparisleri Kapat/Ac, Siparisleri Sifirla butonlari
 
-### 3. Fiyat Input'unda 0 Sorunu Düzeltildi
-- [x] Değer 0 iken input boş görünüyor
+### 3. Siparis Yonetimi
+- [x] Siparisleri Kapat/Ac ozelligi eklendi
+- [x] Siparisler kapaliyken yeni siparis verilemez
+- [x] Siparisler kapaliyken iptal yapilamaz
+- [x] "Siparisleri Sifirla" icin ekstra onay (SIFIRLA yazmak gerekiyor)
+
+### 4. hop.jpg Gorseli
+- [x] Gorsel boyutu 2x buyutuldu (WelcomeScreen ve PasswordProtect)
+
+### 5. Diger
+- [x] Baslik "YZT Yemek Siparisi" olarak guncellendi
+- [x] Welcome ekranindaki alt linkler sadeleştirildi
+
+## Onceki Guncellemeler
+
+### hop.jpg Banner Olarak Duzenlendi
+- [x] Sifre ekraninda banner (genis) olarak gosteriliyor
+- [x] Ana sayfadan kaldirildi (sadece sifre ekraninda)
+
+### Isim Kontrolu Basta Yapiliyor
+- [x] Sepete Ekle butonuna basinca isim kontrolu yapiliyor
+- [x] Isim bossa uyari gosteriliyor ve input'a focus
+
+### Fiyat Input'unda 0 Sorunu Duzeltildi
+- [x] Deger 0 iken input bos gorunuyor
 - [x] placeholder="0" eklendi
-- [x] Tüm fiyat input'ları güncellendi (porsiyon, içecek, sos, ekstra, varsayılan içecekler)
+- [x] Tum fiyat input'lari guncellendi
 
-## Önceki Güncellemeler
-
-- [x] Şifre koruması menü düzenle sayfasına eklendi
-- [x] Global içecek listesi sistemi
-- [x] Sos ve ekstra seçenekleri
-- [x] YZT Yemek Siparişi isim değişikliği
-- [x] Detaylı sipariş özeti (porsiyon, içecek, sos, ekstra bazında)
-- [x] Ödeme durumu takibi (kim ödedi, kim ödemedi)
+### Daha Eski Guncellemeler
+- [x] Sifre korumasi menu duzenle sayfasina eklendi
+- [x] Global icecek listesi sistemi
+- [x] Sos ve ekstra secenekleri
+- [x] YZT Yemek Siparisi isim degisikligi
+- [x] Detayli siparis ozeti (porsiyon, icecek, sos, ekstra bazinda)
+- [x] Odeme durumu takibi (kim odedi, kim odemedi)
 - [x] IBAN ve hesap sahibi ismi kopyalama
-- [x] #taloswin gizli yazılar
+- [x] #taloswin gizli yazilar

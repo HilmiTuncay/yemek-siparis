@@ -58,12 +58,12 @@ export default function PasswordProtect({ children, title }: PasswordProtectProp
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 p-4">
         {/* Banner */}
-        <div className="w-full max-w-sm mb-6 rounded-2xl overflow-hidden shadow-xl">
+        <div className="w-full max-w-lg mb-6 rounded-2xl overflow-hidden shadow-xl">
           <Image
             src="/hop.jpg"
             alt="YZT Banner"
-            width={500}
-            height={300}
+            width={1000}
+            height={600}
             className="w-full h-auto"
             priority
           />
