@@ -33,38 +33,27 @@ export default function HomeContent({ menu, orderStatus: initialStatus }: HomeCo
     }
   }, []);
 
-  // Admin auth kontrolü
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("yemek-siparis-admin-auth");
-      if (saved === "unlocked") {
-        setIsAdminAuthenticated(true);
-      }
-    } catch {
-      // localStorage erişim hatası
-    }
-  }, []);
-
+  // Admin auth kontrolü - Artık localStorage kullanmıyoruz, her açılışta soracak
+  
   const handleUnlock = useCallback(() => {
     setIsUnlocked(true);
   }, []);
 
   const handleAdminClick = () => {
-    if (isAdminAuthenticated) {
-      setShowAdminPanel(true);
-    } else {
-      // Şifre modalını göster
-      setShowAdminPanel(true);
-    }
+    // Her tiklamada sifre sorsun istiyorsak, auth durumunu burada da sifirlayabiliriz
+    // Veya sadece panel kapandiginda sifirlariz.
+    // Kullanici "her tikladiginda sifre ekrani gelmeli" dedi.
+    setIsAdminAuthenticated(false);
+    setShowAdminPanel(true);
   };
 
   const handleAdminAuth = () => {
     setIsAdminAuthenticated(true);
-    try {
-      localStorage.setItem("yemek-siparis-admin-auth", "unlocked");
-    } catch {
-      // localStorage erişim hatası
-    }
+  };
+
+  const handleCloseAdminPanel = () => {
+    setShowAdminPanel(false);
+    setIsAdminAuthenticated(false);
   };
 
 
@@ -118,7 +107,7 @@ export default function HomeContent({ menu, orderStatus: initialStatus }: HomeCo
       {/* Admin Panel Modal */}
       <AdminPanel
         isOpen={showAdminPanel}
-        onClose={() => setShowAdminPanel(false)}
+        onClose={handleCloseAdminPanel}
         isAuthenticated={isAdminAuthenticated}
         onAuthenticate={handleAdminAuth}
       />
