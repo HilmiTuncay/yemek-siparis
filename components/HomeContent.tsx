@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Menu, OrderSystemStatus } from "@/types";
 import OrderForm from "./OrderForm";
-import WelcomeScreen from "./WelcomeScreen";
 import AdminPanel from "./AdminPanel";
 
 interface HomeContentProps {
@@ -68,9 +67,6 @@ export default function HomeContent({ menu, orderStatus: initialStatus }: HomeCo
     }
   };
 
-  if (!isUnlocked) {
-    return <WelcomeScreen onUnlock={handleUnlock} />;
-  }
 
   return (
     <main className="min-h-screen pb-24">

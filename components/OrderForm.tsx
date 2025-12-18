@@ -195,25 +195,25 @@ export default function OrderForm({ menu, orderStatus }: OrderFormProps) {
 
   return (
     <>
+      {/* Isim Girisi */}
+      <div className="mb-6">
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          Isminiz
+        </label>
+        <input
+          type="text"
+          id="name"
+          value={customerName}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder="Adinizi girin"
+          className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        />
+      </div>
+
+      {/* Oneri Kutusu */}
+      <SuggestionBox customerName={customerName} />
+
       <form onSubmit={handleSubmit}>
-        {/* Isim Girisi */}
-        <div className="mb-6">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Isminiz
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={customerName}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Adinizi girin"
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-
-        {/* Oneri Kutusu */}
-        <SuggestionBox customerName={customerName} />
-
         {/* Restoranlar */}
         {menu.restaurants.map((restaurant) => (
           <RestaurantSection
