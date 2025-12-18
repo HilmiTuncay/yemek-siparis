@@ -1,0 +1,20 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "YZT Yemek Siparişi",
+  description: "YZT için yemek siparişi uygulaması",
+};
+// #taloswin
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="tr">
+      <body className="bg-gray-100 min-h-screen">{children}</body>
+    </html>
+  );
+}
