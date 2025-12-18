@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -60,45 +61,59 @@ export default function AdminPanel({
   if (!isAuthenticated) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Admin Girisi</h2>
-
-          <form onSubmit={handlePasswordSubmit}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Sifre"
-              className={`w-full px-4 py-3 rounded-xl text-center text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all mb-4 ${
-                error
-                  ? "bg-red-100 border-2 border-red-400 text-red-600"
-                  : "bg-gray-100 border-2 border-transparent text-gray-800"
-              }`}
-              autoFocus
+        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+          {/* hop.jpg Banner */}
+          <div className="w-full">
+            <Image
+              src="/hop.jpg"
+              alt="YZT"
+              width={400}
+              height={200}
+              className="w-full h-auto object-cover"
+              priority
             />
+          </div>
 
-            {error && (
-              <p className="text-red-500 text-center mb-4 text-sm font-medium">
-                Yanlis sifre
-              </p>
-            )}
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Admin Girisi</h2>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
-              >
-                Iptal
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
-              >
-                Giris
-              </button>
-            </div>
-          </form>
+            <form onSubmit={handlePasswordSubmit}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Sifre"
+                className={`w-full px-4 py-3 rounded-xl text-center text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all mb-4 ${
+                  error
+                    ? "bg-red-100 border-2 border-red-400 text-red-600"
+                    : "bg-gray-100 border-2 border-transparent text-gray-800"
+                }`}
+                autoFocus
+              />
+
+              {error && (
+                <p className="text-red-500 text-center mb-4 text-sm font-medium">
+                  Yanlis sifre
+                </p>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors"
+                >
+                  Iptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Giris
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     );
