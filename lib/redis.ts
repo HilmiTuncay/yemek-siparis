@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { Order, Menu, OrderSystemStatus } from "@/types";
+import { Order, Menu, OrderSystemStatus, Suggestion } from "@/types";
 import { defaultMenu } from "./menu";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -11,6 +11,7 @@ const redis = new Redis({
 const ORDERS_KEY = "yemek-siparisler";
 const MENU_KEY = "yemek-menu";
 const ORDER_STATUS_KEY = "yemek-siparis-status";
+const SUGGESTIONS_KEY = "yemek-oneriler";
 const TTL_SECONDS = 30 * 60; // 30 dakika (siparişler için)
 
 // ==================== SİPARİŞ FONKSİYONLARI ====================
@@ -139,6 +140,80 @@ export async function setOrderStatus(isOpen: boolean): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Redis setOrderStatus error:", error);
+    return false;
+  }
+}
+
+// ==================== ÖNERİ FONKSİYONLARI ====================
+
+export async function getSuggestions(): Promise<Suggestion[]> {
+  noStore();
+  if (!process.env.UPSTASH_REDIS_REST_URL) return [];
+  try {
+    const suggestions = await redis.get<Suggestion[]>(SUGGESTIONS_KEY);
+    return suggestions || [];
+  } catch (error) {
+    console.error("Redis getSuggestions error:", error);
+    return [];
+  }
+}
+
+export async function addSuggestion(suggestion: Suggestion): Promise<boolean> {
+  noStore();
+  try {
+    const suggestions = await getSuggestions();
+    suggestions.push(suggestion);
+    await redis.set(SUGGESTIONS_KEY, suggestions);
+    return true;
+  } catch (error) {
+    console.error("Redis addSuggestion error:", error);
+    return false;
+  }
+}
+
+export async function voteSuggestion(suggestionId: string, voterName: string): Promise<boolean> {
+  noStore();
+  try {
+    const suggestions = await getSuggestions();
+    const suggestion = suggestions.find(s => s.id === suggestionId);
+    if (!suggestion) return false;
+
+    // Zaten oy verdiyse kaldir, vermediyse ekle
+    const voterIndex = suggestion.votes.indexOf(voterName);
+    if (voterIndex >= 0) {
+      suggestion.votes.splice(voterIndex, 1);
+    } else {
+      suggestion.votes.push(voterName);
+    }
+
+    await redis.set(SUGGESTIONS_KEY, suggestions);
+    return true;
+  } catch (error) {
+    console.error("Redis voteSuggestion error:", error);
+    return false;
+  }
+}
+
+export async function deleteSuggestion(suggestionId: string): Promise<boolean> {
+  noStore();
+  try {
+    const suggestions = await getSuggestions();
+    const filtered = suggestions.filter(s => s.id !== suggestionId);
+    await redis.set(SUGGESTIONS_KEY, filtered);
+    return true;
+  } catch (error) {
+    console.error("Redis deleteSuggestion error:", error);
+    return false;
+  }
+}
+
+export async function clearSuggestions(): Promise<boolean> {
+  noStore();
+  try {
+    await redis.del(SUGGESTIONS_KEY);
+    return true;
+  } catch (error) {
+    console.error("Redis clearSuggestions error:", error);
     return false;
   }
 }

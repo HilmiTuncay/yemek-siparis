@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addOrder } from "@/lib/redis";
+import { addOrder, getOrderStatus } from "@/lib/redis";
 import { Order, OrderItemSelection, PaymentStatus } from "@/types";
+
+export const dynamic = 'force-dynamic';
 
 interface OrderInput {
   customerName: string;
@@ -10,14 +12,20 @@ interface OrderInput {
 
 export async function POST(request: NextRequest) {
   try {
+    // Siparis durumunu kontrol et
+    const orderStatus = await getOrderStatus();
+    if (!orderStatus.isOpen) {
+      return NextResponse.json({ error: "Siparisler su an kapali!" }, { status: 403 });
+    }
+
     const body: OrderInput = await request.json();
 
     if (!body.customerName || !body.customerName.trim()) {
-      return NextResponse.json({ error: "İsim gerekli" }, { status: 400 });
+      return NextResponse.json({ error: "Isim gerekli" }, { status: 400 });
     }
 
     if (!body.items || body.items.length === 0) {
-      return NextResponse.json({ error: "En az bir ürün seçmelisiniz" }, { status: 400 });
+      return NextResponse.json({ error: "En az bir urun secmelisiniz" }, { status: 400 });
     }
 
     // Toplam fiyatı hesapla

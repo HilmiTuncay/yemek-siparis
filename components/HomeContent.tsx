@@ -119,8 +119,6 @@ export default function HomeContent({ menu, orderStatus: initialStatus }: HomeCo
         onClose={() => setShowAdminPanel(false)}
         isAuthenticated={isAdminAuthenticated}
         onAuthenticate={handleAdminAuth}
-        orderStatus={orderStatus}
-        onOrderStatusChange={setOrderStatus}
       />
     </main>
   );

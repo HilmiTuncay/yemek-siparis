@@ -124,3 +124,13 @@ export interface OrderSystemStatus {
   isOpen: boolean;
   closedAt?: number;
 }
+
+// Öneri sistemi
+export interface Suggestion {
+  id: string;
+  type: "restaurant" | "food";
+  text: string;
+  submittedBy: string;
+  votes: string[]; // Oy veren kullanıcı isimleri
+  createdAt: number;
+}

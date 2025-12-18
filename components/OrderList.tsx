@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Order, PaymentStatus, Restaurant } from "@/types";
-// #taloswin
+import { Order, PaymentStatus, Restaurant, OrderSystemStatus } from "@/types";
 
 interface OrdersResponse {
   orders: Order[];
@@ -14,13 +13,13 @@ interface MenuResponse {
   restaurants: Restaurant[];
 }
 
-// Ödeme durumu badge'i
+// Odeme durumu badge'i
 function getPaymentStatusBadge(status: PaymentStatus | undefined) {
   switch (status) {
     case "paid":
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-          Ödendi
+          Odendi
         </span>
       );
     case "later":
@@ -32,7 +31,7 @@ function getPaymentStatusBadge(status: PaymentStatus | undefined) {
     case "door":
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-          Kapıda
+          Kapida
         </span>
       );
     default:
@@ -74,24 +73,31 @@ function getCleanIBAN(iban: string): string {
 export default function OrderList() {
   const [data, setData] = useState<OrdersResponse | null>(null);
   const [menu, setMenu] = useState<MenuResponse | null>(null);
+  const [orderStatus, setOrderStatus] = useState<OrderSystemStatus>({ isOpen: true });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
-      const [ordersRes, menuRes] = await Promise.all([
+      const [ordersRes, menuRes, statusRes] = await Promise.all([
         fetch("/api/siparisler"),
-        fetch("/api/menu")
+        fetch("/api/menu"),
+        fetch("/api/siparis-durumu"),
       ]);
-      if (!ordersRes.ok) throw new Error("Siparişler alınamadı");
+      if (!ordersRes.ok) throw new Error("Siparisler alinamadi");
       const ordersResult = await ordersRes.json();
       const menuResult = await menuRes.json();
+      const statusResult = await statusRes.json();
       setData(ordersResult);
       setMenu(menuResult);
+      setOrderStatus(statusResult);
       setError(null);
     } catch {
-      setError("Siparişler yüklenemedi");
+      setError("Siparisler yuklenemedi");
     } finally {
       setLoading(false);
     }
@@ -103,27 +109,53 @@ export default function OrderList() {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  const handleClearAll = async () => {
-    if (!confirm("Tüm siparişleri silmek istediğinize emin misiniz?")) return;
+  const handleToggleOrders = async () => {
+    setActionLoading(true);
+    try {
+      const response = await fetch("/api/siparis-durumu", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isOpen: !orderStatus.isOpen }),
+      });
+      if (response.ok) {
+        setOrderStatus({ ...orderStatus, isOpen: !orderStatus.isOpen });
+      }
+    } catch {
+      alert("Durum guncellenemedi");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResetOrders = async () => {
+    if (resetConfirmText !== "SIFIRLA") {
+      alert("Lutfen 'SIFIRLA' yazin");
+      return;
+    }
+    setActionLoading(true);
     try {
       const response = await fetch("/api/siparisler", { method: "DELETE" });
       if (response.ok) {
+        setShowResetConfirm(false);
+        setResetConfirmText("");
         fetchOrders();
       }
     } catch {
-      alert("Siparişler silinemedi");
+      alert("Siparisler silinemedi");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeleteOrder = async (orderId: string) => {
-    if (!confirm("Bu siparişi silmek istediğinize emin misiniz?")) return;
+    if (!confirm("Bu siparisi silmek istediginize emin misiniz?")) return;
     try {
       const response = await fetch(`/api/siparisler?id=${orderId}`, { method: "DELETE" });
       if (response.ok) {
         fetchOrders();
       }
     } catch {
-      alert("Sipariş silinemedi");
+      alert("Siparis silinemedi");
     }
   };
 
@@ -133,7 +165,7 @@ export default function OrderList() {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  // Kişi bazlı gruplama
+  // Kisi bazli gruplama
   const groupedOrders = data?.orders.reduce((acc, order) => {
     const name = order.customerName;
     if (!acc[name]) {
@@ -143,7 +175,7 @@ export default function OrderList() {
     return acc;
   }, {} as Record<string, Order[]>);
 
-  // Restoran bazlı detaylı özet
+  // Restoran bazli detayli ozet
   const restaurantSummary = data?.orders.reduce((acc, order) => {
     order.items.forEach((item) => {
       const restaurantKey = item.restaurantId;
@@ -159,7 +191,7 @@ export default function OrderList() {
         };
       }
 
-      // Porsiyon sayımı
+      // Porsiyon sayimi
       const portionKey = `${item.productName}-${item.portionName}`;
       if (!acc[restaurantKey].portions[portionKey]) {
         acc[restaurantKey].portions[portionKey] = {
@@ -169,8 +201,8 @@ export default function OrderList() {
       }
       acc[restaurantKey].portions[portionKey].count += item.quantity;
 
-      // İçecek sayımı
-      if (item.drinkName && item.drinkName !== "İçecek Yok") {
+      // Icecek sayimi
+      if (item.drinkName && item.drinkName !== "Icecek Yok") {
         if (!acc[restaurantKey].drinks[item.drinkId]) {
           acc[restaurantKey].drinks[item.drinkId] = {
             name: item.drinkName,
@@ -180,7 +212,7 @@ export default function OrderList() {
         acc[restaurantKey].drinks[item.drinkId].count += item.quantity;
       }
 
-      // Sos sayımı
+      // Sos sayimi
       if (item.sauceName) {
         const sauceKey = item.sauceId || item.sauceName;
         if (!acc[restaurantKey].sauces[sauceKey]) {
@@ -192,7 +224,7 @@ export default function OrderList() {
         acc[restaurantKey].sauces[sauceKey].count += item.quantity;
       }
 
-      // Ekstra sayımı
+      // Ekstra sayimi
       if (item.extraName) {
         const extraKey = item.extraId || item.extraName;
         if (!acc[restaurantKey].extras[extraKey]) {
@@ -218,7 +250,7 @@ export default function OrderList() {
     totalItems: number;
   }>);
 
-  // Ödeme durumu özeti
+  // Odeme durumu ozeti
   const paymentSummary = data?.orders.reduce((acc, order) => {
     const status = order.paymentStatus || "unknown";
     if (!acc[status]) {
@@ -251,274 +283,300 @@ export default function OrderList() {
     );
   }
 
-  if (!data || data.orders.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        <p className="text-xl">Henüz sipariş yok</p>
-        <p className="mt-2">Siparişler burada görünecek</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* Özet Kartı */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-green-800 mb-4">Sipariş Özeti</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-green-600">{data.count}</p>
-            <p className="text-sm text-gray-600">Toplam Sipariş</p>
+    <div className="space-y-6">
+      {/* Siparis Yonetim Paneli */}
+      <div className="bg-white rounded-xl shadow-lg p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Durum Gostergesi */}
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${orderStatus.isOpen ? "bg-green-500 animate-pulse" : "bg-red-500"}`}></div>
+            <span className={`font-semibold ${orderStatus.isOpen ? "text-green-700" : "text-red-700"}`}>
+              Siparisler {orderStatus.isOpen ? "Acik" : "Kapali"}
+            </span>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-green-600">{Object.keys(groupedOrders || {}).length}</p>
-            <p className="text-sm text-gray-600">Kişi</p>
-          </div>
-          <div className="text-center col-span-2 sm:col-span-1">
-            <p className="text-3xl font-bold text-green-600">{data.grandTotal} TL</p>
-            <p className="text-sm text-gray-600">Toplam Tutar</p>
+
+          {/* Butonlar */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleToggleOrders}
+              disabled={actionLoading}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                orderStatus.isOpen
+                  ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                  : "bg-green-500 hover:bg-green-600 text-white"
+              }`}
+            >
+              {actionLoading ? "..." : orderStatus.isOpen ? "Siparisleri Kapat" : "Siparisleri Ac"}
+            </button>
+
+            {!showResetConfirm ? (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
+              >
+                Sifirla
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
+                  placeholder="SIFIRLA yaz"
+                  className="w-28 px-2 py-2 border-2 border-red-300 rounded-lg text-sm"
+                />
+                <button
+                  onClick={handleResetOrders}
+                  disabled={actionLoading || resetConfirmText !== "SIFIRLA"}
+                  className="px-3 py-2 bg-red-600 text-white rounded-lg font-semibold disabled:bg-red-300"
+                >
+                  Onayla
+                </button>
+                <button
+                  onClick={() => { setShowResetConfirm(false); setResetConfirmText(""); }}
+                  className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg"
+                >
+                  X
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Ödeme Durumu Özeti */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Ödeme Durumu</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Ödeyenler */}
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-green-800">Ödedi</span>
-              <span className="text-green-600 font-bold">{paymentSummary?.paid?.total || 0} TL</span>
-            </div>
-            <p className="text-2xl font-bold text-green-600">{paymentSummary?.paid?.count || 0} kişi</p>
-            {paymentSummary?.paid?.names && paymentSummary.paid.names.length > 0 && (
-              <p className="text-xs text-green-700 mt-2">{paymentSummary.paid.names.join(", ")}</p>
-            )}
+      {/* Ozet Kartlari */}
+      {data && data.orders.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+            <p className="text-green-100 text-sm">Toplam Siparis</p>
+            <p className="text-3xl font-bold">{data.count}</p>
           </div>
-
-          {/* Birazdan Ödeyecekler */}
-          <div className="bg-yellow-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-yellow-800">Birazdan</span>
-              <span className="text-yellow-600 font-bold">{paymentSummary?.later?.total || 0} TL</span>
-            </div>
-            <p className="text-2xl font-bold text-yellow-600">{paymentSummary?.later?.count || 0} kişi</p>
-            {paymentSummary?.later?.names && paymentSummary.later.names.length > 0 && (
-              <p className="text-xs text-yellow-700 mt-2">{paymentSummary.later.names.join(", ")}</p>
-            )}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+            <p className="text-blue-100 text-sm">Kisi Sayisi</p>
+            <p className="text-3xl font-bold">{Object.keys(groupedOrders || {}).length}</p>
           </div>
-
-          {/* Kapıda Ödeyecekler */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-blue-800">Kapıda</span>
-              <span className="text-blue-600 font-bold">{paymentSummary?.door?.total || 0} TL</span>
-            </div>
-            <p className="text-2xl font-bold text-blue-600">{paymentSummary?.door?.count || 0} kişi</p>
-            {paymentSummary?.door?.names && paymentSummary.door.names.length > 0 && (
-              <p className="text-xs text-blue-700 mt-2">{paymentSummary.door.names.join(", ")}</p>
-            )}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+            <p className="text-purple-100 text-sm">Toplam Tutar</p>
+            <p className="text-3xl font-bold">{data.grandTotal} TL</p>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
+            <p className="text-emerald-100 text-sm">Odenen</p>
+            <p className="text-3xl font-bold">{paymentSummary?.paid?.total || 0} TL</p>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Restoran Bazlı Toplu Sipariş Özeti */}
+      {/* Siparis Yoksa */}
+      {(!data || data.orders.length === 0) && (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-xl">Henuz siparis yok</p>
+          <p className="mt-2">Siparisler burada gorunecek</p>
+        </div>
+      )}
+
+      {/* Odeme Durumu Ozeti */}
+      {data && data.orders.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Odeme Durumu</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-green-50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-green-600">{paymentSummary?.paid?.count || 0}</p>
+              <p className="text-xs text-green-700">Odedi</p>
+              <p className="text-sm font-semibold text-green-600 mt-1">{paymentSummary?.paid?.total || 0} TL</p>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-yellow-600">{paymentSummary?.later?.count || 0}</p>
+              <p className="text-xs text-yellow-700">Birazdan</p>
+              <p className="text-sm font-semibold text-yellow-600 mt-1">{paymentSummary?.later?.total || 0} TL</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-blue-600">{paymentSummary?.door?.count || 0}</p>
+              <p className="text-xs text-blue-700">Kapida</p>
+              <p className="text-sm font-semibold text-blue-600 mt-1">{paymentSummary?.door?.total || 0} TL</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restoran Bazli Siparis Ozeti */}
       {Object.entries(restaurantSummary || {}).map(([restaurantId, restaurant]) => {
         const restaurantInfo = menu?.restaurants.find(r => r.id === restaurantId);
         return (
-          <div key={restaurantId} className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">{restaurant.name}</h2>
-            <p className="text-sm text-gray-500 mb-4">Toplam: {restaurant.totalItems} adet - {restaurant.total} TL</p>
+          <div key={restaurantId} className="bg-white rounded-xl shadow-md overflow-hidden">
+            {/* Restoran Baslik */}
+            <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">{restaurant.name}</h2>
+                <div className="text-right">
+                  <p className="text-2xl font-bold">{restaurant.totalItems} adet</p>
+                  <p className="text-gray-300">{restaurant.total} TL</p>
+                </div>
+              </div>
+            </div>
 
-            {/* IBAN ve Hesap Bilgisi */}
-            {restaurantInfo?.iban && (
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                <p className="text-sm font-medium text-blue-800 mb-2">Ödeme Bilgileri:</p>
-                <div className="space-y-2">
+            <div className="p-4 space-y-4">
+              {/* IBAN Bilgisi */}
+              {restaurantInfo?.iban && (
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-xs font-medium text-blue-700 mb-1">Odeme Bilgileri</p>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-blue-700 text-sm">{formatIBAN(restaurantInfo.iban)}</span>
+                    <span className="font-mono text-blue-800 text-sm">{formatIBAN(restaurantInfo.iban)}</span>
                     <button
                       onClick={() => copyToClipboard(getCleanIBAN(restaurantInfo.iban!), `iban-${restaurantId}`)}
-                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      className={`px-2 py-1 rounded text-xs font-medium ${
                         copiedItem === `iban-${restaurantId}`
                           ? "bg-green-500 text-white"
-                          : "bg-blue-500 hover:bg-blue-600 text-white"
+                          : "bg-blue-500 text-white"
                       }`}
                     >
-                      {copiedItem === `iban-${restaurantId}` ? "Kopyalandı!" : "IBAN Kopyala"}
+                      {copiedItem === `iban-${restaurantId}` ? "Kopyalandi!" : "Kopyala"}
                     </button>
                   </div>
                   {restaurantInfo.accountHolder && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-blue-700 text-sm">{restaurantInfo.accountHolder}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-blue-800 text-sm">{restaurantInfo.accountHolder}</span>
                       <button
                         onClick={() => copyToClipboard(restaurantInfo.accountHolder!, `name-${restaurantId}`)}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium ${
                           copiedItem === `name-${restaurantId}`
                             ? "bg-green-500 text-white"
-                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                            : "bg-blue-500 text-white"
                         }`}
                       >
-                        {copiedItem === `name-${restaurantId}` ? "Kopyalandı!" : "İsim Kopyala"}
+                        {copiedItem === `name-${restaurantId}` ? "Kopyalandi!" : "Kopyala"}
                       </button>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Porsiyon Bazlı Özet */}
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-700 mb-2">Yemekler:</h3>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <ul className="space-y-1">
+              {/* Yemekler */}
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2 text-sm">Yemekler</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {Object.values(restaurant.portions)
                     .sort((a, b) => b.count - a.count)
                     .map((portion, idx) => (
-                      <li key={idx} className="flex justify-between text-sm">
-                        <span>{portion.name}</span>
-                        <span className="font-bold text-green-600">{portion.count} adet</span>
-                      </li>
+                      <div key={idx} className="flex justify-between items-center bg-gray-50 rounded-lg px-3 py-2">
+                        <span className="text-sm text-gray-700">{portion.name}</span>
+                        <span className="font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">{portion.count}x</span>
+                      </div>
                     ))}
-                </ul>
+                </div>
               </div>
-            </div>
 
-            {/* İçecek Bazlı Özet */}
-            {Object.keys(restaurant.drinks).length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-700 mb-2">İçecekler:</h3>
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <ul className="space-y-1">
+              {/* Icecekler */}
+              {Object.keys(restaurant.drinks).length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2 text-sm">Icecekler</h3>
+                  <div className="flex flex-wrap gap-2">
                     {Object.values(restaurant.drinks)
                       .sort((a, b) => b.count - a.count)
                       .map((drink, idx) => (
-                        <li key={idx} className="flex justify-between text-sm">
-                          <span>{drink.name}</span>
-                          <span className="font-bold text-blue-600">{drink.count} adet</span>
-                        </li>
+                        <span key={idx} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                          {drink.name} <strong>{drink.count}x</strong>
+                        </span>
                       ))}
-                  </ul>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Sos Bazlı Özet */}
-            {Object.keys(restaurant.sauces).length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-700 mb-2">Soslar:</h3>
-                <div className="bg-yellow-50 rounded-lg p-3">
-                  <ul className="space-y-1">
+              {/* Soslar */}
+              {Object.keys(restaurant.sauces).length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2 text-sm">Soslar</h3>
+                  <div className="flex flex-wrap gap-2">
                     {Object.values(restaurant.sauces)
                       .sort((a, b) => b.count - a.count)
                       .map((sauce, idx) => (
-                        <li key={idx} className="flex justify-between text-sm">
-                          <span>{sauce.name}</span>
-                          <span className="font-bold text-yellow-600">{sauce.count} adet</span>
-                        </li>
+                        <span key={idx} className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm">
+                          {sauce.name} <strong>{sauce.count}x</strong>
+                        </span>
                       ))}
-                  </ul>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Ekstra Bazlı Özet */}
-            {Object.keys(restaurant.extras).length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-700 mb-2">Ekstralar:</h3>
-                <div className="bg-green-50 rounded-lg p-3">
-                  <ul className="space-y-1">
+              {/* Ekstralar */}
+              {Object.keys(restaurant.extras).length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2 text-sm">Ekstralar</h3>
+                  <div className="flex flex-wrap gap-2">
                     {Object.values(restaurant.extras)
                       .sort((a, b) => b.count - a.count)
                       .map((extra, idx) => (
-                        <li key={idx} className="flex justify-between text-sm">
-                          <span>{extra.name}</span>
-                          <span className="font-bold text-green-600">{extra.count} adet</span>
-                        </li>
+                        <span key={idx} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                          {extra.name} <strong>{extra.count}x</strong>
+                        </span>
                       ))}
-                  </ul>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         );
       })}
 
-      {/* Kişi Bazlı Siparişler */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Kişi Bazlı Siparişler</h2>
-        <div className="space-y-6">
-          {Object.entries(groupedOrders || {}).map(([name, orders]) => {
-            const personTotal = orders.reduce((sum, o) => sum + o.totalPrice, 0);
-            const allPaid = orders.every(o => o.paymentStatus === "paid");
-            return (
-              <div key={name} className={`border-b pb-4 last:border-0 ${allPaid ? "bg-green-50 -mx-2 px-2 py-2 rounded-lg" : ""}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-lg text-gray-800">{name}</h3>
-                    {allPaid && <span className="text-green-600 text-sm">✓</span>}
-                  </div>
-                  <span className="text-green-600 font-semibold">{personTotal} TL</span>
-                </div>
-                {orders.map((order) => (
-                  <div key={order.id} className="ml-4 mb-2 p-3 bg-gray-50 rounded flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getPaymentStatusBadge(order.paymentStatus)}
-                      </div>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        {order.items.map((item, idx) => (
-                          <li key={idx}>
-                            <span className="font-medium">{item.quantity}x</span> {item.productName}{" "}
-                            <span className="text-gray-500">({item.portionName})</span>
-                            {item.sauceName && (
-                              <span className="text-yellow-600"> - {item.sauceName}</span>
-                            )}
-                            {item.extraName && (
-                              <span className="text-green-600"> + {item.extraName}</span>
-                            )}
-                            {item.drinkName !== "İçecek Yok" && (
-                              <span className="text-gray-500"> + {item.drinkName}</span>
-                            )}
-                            <span className="ml-2 text-green-600">({item.itemTotal} TL)</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-sm font-semibold mt-2 text-gray-500">
-                        {order.items[0]?.restaurantName}
-                      </p>
+      {/* Kisi Bazli Siparisler */}
+      {data && data.orders.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Kisi Bazli Siparisler</h2>
+          <div className="space-y-3">
+            {Object.entries(groupedOrders || {}).map(([name, orders]) => {
+              const personTotal = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+              const allPaid = orders.every(o => o.paymentStatus === "paid");
+              return (
+                <div key={name} className={`rounded-lg p-3 ${allPaid ? "bg-green-50 border border-green-200" : "bg-gray-50"}`}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-800">{name}</span>
+                      {allPaid && <span className="text-green-500">✓</span>}
                     </div>
-                    <button
-                      onClick={() => handleDeleteOrder(order.id)}
-                      className="text-red-500 hover:text-red-700 text-sm ml-4"
-                    >
-                      Sil
-                    </button>
+                    <span className="font-bold text-green-600">{personTotal} TL</span>
                   </div>
-                ))}
-              </div>
-            );
-          })}
+                  {orders.map((order) => (
+                    <div key={order.id} className="bg-white rounded p-2 mb-2 last:mb-0 flex justify-between items-start text-sm">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {getPaymentStatusBadge(order.paymentStatus)}
+                          <span className="text-gray-400 text-xs">
+                            {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <ul className="text-gray-600 space-y-0.5">
+                          {order.items.map((item, idx) => (
+                            <li key={idx}>
+                              <span className="font-medium">{item.quantity}x</span> {item.productName}
+                              <span className="text-gray-400"> ({item.portionName})</span>
+                              {item.sauceName && <span className="text-yellow-600"> - {item.sauceName}</span>}
+                              {item.extraName && <span className="text-green-600"> + {item.extraName}</span>}
+                              {item.drinkName && item.drinkName !== "Icecek Yok" && <span className="text-blue-600"> + {item.drinkName}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Temizle Butonu */}
-      <div className="flex justify-center">
-        <button
-          onClick={handleClearAll}
-          className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg"
-        >
-          Tüm Siparişleri Temizle
-        </button>
-      </div>
-
-      {/* Yenile Butonu */}
+      {/* Yenile */}
       <div className="text-center text-sm text-gray-500">
         <button onClick={fetchOrders} className="underline hover:text-gray-700">
           Yenile
         </button>
-        <span className="ml-2">(Otomatik 10 saniyede bir güncellenir)</span>
+        <span className="ml-2">(Otomatik 10 saniyede bir guncellenir)</span>
       </div>
     </div>
   );

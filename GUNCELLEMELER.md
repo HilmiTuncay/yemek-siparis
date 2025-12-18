@@ -2,36 +2,42 @@
 
 ## Son Guncelleme (Bu Oturum)
 
-### 1. Siparislerim Sayfasi
-- [x] Ana sayfadaki "Siparisleri Gor" -> "Siparislerim" olarak degistirildi
-- [x] Kisiye ozel siparisler gosteriliyor (localStorage'dan isim aliniyor)
-- [x] Siparisler acikken iptal edilebiliyor
-- [x] /siparislerim sayfasi eklendi
+### 1. Admin Paneli Duzeltmeleri
+- [x] Admin butonuna tiklaninca sifre isteniyor (her seferinde)
+- [x] Admin paneli sadelestiridi (sadece Genel Siparisler ve Menuyu Duzenle linkleri)
+- [x] Siparis yonetimi Genel Siparisler sayfasina tasindi
 
-### 2. Admin Paneli
-- [x] Sag alttaki "Menuyu Duzenle" butonu kaldirildi
-- [x] Sag uste "Admin" butonu eklendi
-- [x] Admin butonuna tiklaninca sifre ekrani geliyor
-- [x] Admin panelinde: Genel Siparisler, Menuyu Duzenle, Siparisleri Kapat/Ac, Siparisleri Sifirla butonlari
+### 2. Siparis Yonetimi (Genel Siparisler Sayfasi)
+- [x] Siparisleri Kapat/Ac butonu en uste eklendi
+- [x] Siparisleri Sifirla butonu eklendi (SIFIRLA yazarak onay)
+- [x] Canli durum gostergesi (yesil/kirmizi nokta)
+- [x] API'de siparis durumu kontrolu - siparisler kapaliyken siparis verilemez
 
-### 3. Siparis Yonetimi
-- [x] Siparisleri Kapat/Ac ozelligi eklendi
-- [x] Siparisler kapaliyken yeni siparis verilemez
-- [x] Siparisler kapaliyken iptal yapilamaz
-- [x] "Siparisleri Sifirla" icin ekstra onay (SIFIRLA yazmak gerekiyor)
+### 3. Yeni UI Tasarimi
+- [x] Ozet kartlari: Toplam siparis, kisi sayisi, toplam tutar, odenen
+- [x] Odeme durumu ozeti (odedi/birazdan/kapida) kart seklinde
+- [x] Restoran kartlari: koyu baslik, adet ve tutar sag ustte
+- [x] Yemekler grid gorunumde, adetler renkli badge'ler
+- [x] Icecek, sos, ekstra pill/tag seklinde
 
-### 4. hop.jpg Gorseli
-- [x] Gorsel boyutu 2x buyutuldu (WelcomeScreen ve PasswordProtect)
-
-### 5. Diger
-- [x] Baslik "YZT Yemek Siparisi" olarak guncellendi
-- [x] Welcome ekranindaki alt linkler sadeleştirildi
+### 4. Oneri ve Oylama Sistemi
+- [x] Ana sayfada acilir-kapanir oneri kutusu
+- [x] Yemek veya restoran onerisi yapilabilir
+- [x] Herkes onerilere oy verebilir (toggle sistemi)
+- [x] En cok oy alanlar ustte listelenir
+- [x] /api/oneriler API'si eklendi
 
 ## Onceki Guncellemeler
 
+### Siparislerim Sayfasi
+- [x] Ana sayfadaki "Siparisleri Gor" -> "Siparislerim" olarak degistirildi
+- [x] Kisiye ozel siparisler gosteriliyor
+- [x] Siparisler acikken iptal edilebiliyor
+- [x] /siparislerim sayfasi eklendi
+
 ### hop.jpg Banner Olarak Duzenlendi
 - [x] Sifre ekraninda banner (genis) olarak gosteriliyor
-- [x] Ana sayfadan kaldirildi (sadece sifre ekraninda)
+- [x] Gorsel boyutu 2x buyutuldu
 
 ### Isim Kontrolu Basta Yapiliyor
 - [x] Sepete Ekle butonuna basinca isim kontrolu yapiliyor
@@ -40,7 +46,6 @@
 ### Fiyat Input'unda 0 Sorunu Duzeltildi
 - [x] Deger 0 iken input bos gorunuyor
 - [x] placeholder="0" eklendi
-- [x] Tum fiyat input'lari guncellendi
 
 ### Daha Eski Guncellemeler
 - [x] Sifre korumasi menu duzenle sayfasina eklendi
@@ -50,4 +55,3 @@
 - [x] Detayli siparis ozeti (porsiyon, icecek, sos, ekstra bazinda)
 - [x] Odeme durumu takibi (kim odedi, kim odemedi)
 - [x] IBAN ve hesap sahibi ismi kopyalama
-- [x] #taloswin gizli yazilar

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Menu, OrderItemSelection, UserCompanyInfo, PaymentStatus, OrderSystemStatus } from "@/types";
 import RestaurantSection from "./RestaurantSection";
 import PaymentModal from "./PaymentModal";
+import SuggestionBox from "./SuggestionBox";
 
 interface OrderFormProps {
   menu: Menu;
@@ -195,20 +196,23 @@ export default function OrderForm({ menu, orderStatus }: OrderFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit}>
-        {/* İsim Girişi */}
+        {/* Isim Girisi */}
         <div className="mb-6">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            İsminiz
+            Isminiz
           </label>
           <input
             type="text"
             id="name"
             value={customerName}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Adınızı girin"
+            placeholder="Adinizi girin"
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
         </div>
+
+        {/* Oneri Kutusu */}
+        <SuggestionBox customerName={customerName} />
 
         {/* Restoranlar */}
         {menu.restaurants.map((restaurant) => (
