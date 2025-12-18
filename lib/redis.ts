@@ -4,8 +4,8 @@ import { defaultMenu } from "./menu";
 import { unstable_noStore as noStore } from "next/cache";
 
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  url: process.env.UPSTASH_REDIS_REST_URL || "https://example.com",
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || "example_token",
 });
 
 const ORDERS_KEY = "yemek-siparisler";
@@ -16,6 +16,7 @@ const TTL_SECONDS = 30 * 60; // 30 dakika (siparişler için)
 
 export async function getOrders(): Promise<Order[]> {
   noStore();
+  if (!process.env.UPSTASH_REDIS_REST_URL) return [];
   try {
     const orders = await redis.get<Order[]>(ORDERS_KEY);
     return orders || [];
@@ -69,6 +70,10 @@ export async function deleteOrder(orderId: string): Promise<boolean> {
 
 export async function getMenu(): Promise<Menu> {
   noStore();
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    console.warn("Redis URL missing, returning default menu");
+    return defaultMenu;
+  }
   try {
     const menu = await redis.get<Menu>(MENU_KEY);
     if (menu) {
