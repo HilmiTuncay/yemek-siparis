@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getOrders, clearOrders, deleteOrder } from "@/lib/redis";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const orders = await getOrders();

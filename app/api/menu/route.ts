@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getMenu, saveMenu } from "@/lib/redis";
 import { Menu } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 // GET - Menüyü getir
 export async function GET() {
   try {
