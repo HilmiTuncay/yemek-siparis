@@ -11,6 +11,7 @@ interface ProductCardProps {
   onAddToCart: (selection: OrderItemSelection) => void;
   onRemoveFromCart: () => void;
   onUpdateCart: (selection: OrderItemSelection) => void;
+  disabled?: boolean; // Siparis kapaliysa veya restoran kapaliysa
 }
 
 export default function ProductCard({
@@ -21,6 +22,7 @@ export default function ProductCard({
   onAddToCart,
   onRemoveFromCart,
   onUpdateCart,
+  disabled = false,
 }: ProductCardProps) {
   // Local state - henüz sepete eklenmemiş seçimler için
   const [localPortionId, setLocalPortionId] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function ProductCard({
   const hasLocalSelection = localPortionId !== null;
 
   const handlePortionSelect = (portionId: string) => {
-    if (isInCart) return; // Sepetteyse porsiyon değiştirilemez
+    if (isInCart || disabled) return; // Sepetteyse veya kapaliysa porsiyon degistirilemez
     setLocalPortionId(portionId);
   };
 
@@ -131,11 +133,18 @@ export default function ProductCard({
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md p-4 border-2 transition-colors ${isInCart ? "border-green-500" : "border-transparent"}`}>
+    <div className={`bg-white rounded-lg shadow-md p-4 border-2 transition-colors ${isInCart ? "border-green-500" : "border-transparent"} ${disabled ? "opacity-60" : ""}`}>
       <h4 className="font-semibold text-gray-800 mb-3">{product.name}</h4>
 
+      {/* Kapaliysa uyari */}
+      {disabled && !isInCart && (
+        <div className="bg-gray-100 text-gray-500 text-sm text-center py-2 px-3 rounded-lg mb-3">
+          Siparis alinamiyor
+        </div>
+      )}
+
       {/* Sepette değilse: Seçim yapma alanı */}
-      {!isInCart && (
+      {!isInCart && !disabled && (
         <>
           {/* Porsiyon Seçimi */}
           <div className="mb-3">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addOrder, getOrderStatus } from "@/lib/redis";
+import { addOrder, getOrderStatus, getMenu } from "@/lib/redis";
 import { Order, OrderItemSelection, PaymentStatus } from "@/types";
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ interface OrderInput {
 
 export async function POST(request: NextRequest) {
   try {
-    // Siparis durumunu kontrol et
+    // Siparis durumunu kontrol et (race condition icin tekrar kontrol)
     const orderStatus = await getOrderStatus();
     if (!orderStatus.isOpen) {
       return NextResponse.json({ error: "Siparisler su an kapali!" }, { status: 403 });
@@ -26,6 +26,17 @@ export async function POST(request: NextRequest) {
 
     if (!body.items || body.items.length === 0) {
       return NextResponse.json({ error: "En az bir urun secmelisiniz" }, { status: 400 });
+    }
+
+    // Restoran bazinda kontrol (race condition onlemi)
+    const menu = await getMenu();
+    for (const item of body.items) {
+      const restaurant = menu.restaurants.find(r => r.id === item.restaurantId);
+      if (restaurant && restaurant.isOpen === false) {
+        return NextResponse.json({
+          error: `${restaurant.name} su an siparis almiyor!`
+        }, { status: 403 });
+      }
     }
 
     // Toplam fiyatı hesapla

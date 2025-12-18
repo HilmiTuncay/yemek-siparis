@@ -127,6 +127,30 @@ export default function OrderList() {
     }
   };
 
+  // Restoran bazinda siparis ac/kapa
+  const handleToggleRestaurant = async (restaurantId: string, currentlyOpen: boolean) => {
+    if (!menu) return;
+    try {
+      // Menuyu guncelle - ilgili restoranin isOpen degerini degistir
+      const updatedRestaurants = menu.restaurants.map(r =>
+        r.id === restaurantId ? { ...r, isOpen: !currentlyOpen } : r
+      );
+      const updatedMenu = { ...menu, restaurants: updatedRestaurants };
+
+      const response = await fetch("/api/menu", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMenu),
+      });
+
+      if (response.ok) {
+        setMenu(updatedMenu);
+      }
+    } catch {
+      alert("Restoran durumu guncellenemedi");
+    }
+  };
+
   const handleResetOrders = async () => {
     if (resetConfirmText !== "SIFIRLA") {
       alert("Lutfen 'SIFIRLA' yazin");
@@ -402,15 +426,33 @@ export default function OrderList() {
       {/* Restoran Bazli Siparis Ozeti */}
       {Object.entries(restaurantSummary || {}).map(([restaurantId, restaurant]) => {
         const restaurantInfo = menu?.restaurants.find(r => r.id === restaurantId);
+        const isRestaurantOpen = restaurantInfo?.isOpen !== false;
         return (
           <div key={restaurantId} className="bg-white rounded-xl shadow-md overflow-hidden">
             {/* Restoran Baslik */}
-            <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4">
+            <div className={`bg-gradient-to-r ${isRestaurantOpen ? "from-gray-800 to-gray-700" : "from-red-700 to-red-600"} text-white p-4`}>
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">{restaurant.name}</h2>
-                <div className="text-right">
-                  <p className="text-2xl font-bold">{restaurant.totalItems} adet</p>
-                  <p className="text-gray-300">{restaurant.total} TL</p>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold">{restaurant.name}</h2>
+                  {!isRestaurantOpen && (
+                    <span className="bg-red-900/50 text-red-200 text-xs px-2 py-1 rounded">KAPALI</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => handleToggleRestaurant(restaurantId, isRestaurantOpen)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      isRestaurantOpen
+                        ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                        : "bg-green-500 hover:bg-green-600 text-white"
+                    }`}
+                  >
+                    {isRestaurantOpen ? "Kapat" : "Ac"}
+                  </button>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">{restaurant.totalItems} adet</p>
+                    <p className="text-gray-300">{restaurant.total} TL</p>
+                  </div>
                 </div>
               </div>
             </div>

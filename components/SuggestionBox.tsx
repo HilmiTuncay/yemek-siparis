@@ -12,7 +12,7 @@ export default function SuggestionBox({ customerName }: SuggestionBoxProps) {
   const [newSuggestion, setNewSuggestion] = useState("");
   const [suggestionType, setSuggestionType] = useState<"restaurant" | "food">("food");
   const [loading, setLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Varsayilan olarak acik
 
   const fetchSuggestions = useCallback(async () => {
     try {

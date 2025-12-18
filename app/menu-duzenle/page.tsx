@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Menu, Restaurant, Product, DrinkOption, SauceOption, ExtraOption } from "@/types";
+import { Menu, Restaurant, Product, DrinkOption, SauceOption, ExtraOption, Suggestion } from "@/types";
 import { defaultDrinkOptions } from "@/lib/menu";
 import PasswordProtect from "@/components/PasswordProtect";
 
@@ -17,8 +17,36 @@ function MenuDuzenleContent() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDefaultDrinks, setShowDefaultDrinks] = useState(false);
   const [expandedRestaurantDrinks, setExpandedRestaurantDrinks] = useState<Record<string, boolean>>({});
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
-  // Menüyü yükle
+  // Onerileri yukle
+  const fetchSuggestions = useCallback(async () => {
+    try {
+      const response = await fetch("/api/oneriler");
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+      }
+    } catch {
+      // Hata durumunda
+    }
+  }, []);
+
+  // Oneri sil
+  const handleDeleteSuggestion = async (id: string) => {
+    if (!confirm("Bu oneriyi silmek istediginize emin misiniz?")) return;
+    try {
+      const response = await fetch(`/api/oneriler?id=${id}`, { method: "DELETE" });
+      if (response.ok) {
+        fetchSuggestions();
+      }
+    } catch {
+      alert("Oneri silinemedi");
+    }
+  };
+
+  // Menüyü ve onerileri yukle
   useEffect(() => {
     fetch("/api/menu")
       .then((res) => res.json())
@@ -30,7 +58,8 @@ function MenuDuzenleContent() {
         setMessage({ type: "error", text: "Menü yüklenemedi" });
         setLoading(false);
       });
-  }, []);
+    fetchSuggestions();
+  }, [fetchSuggestions]);
 
   // Menüyü kaydet
   const handleSave = async () => {
@@ -92,8 +121,8 @@ function MenuDuzenleContent() {
     const globalDrinks = menu.defaultDrinks || defaultDrinkOptions;
     const newProduct: Product = {
       id: generateId(),
-      name: "Yeni Ürün",
-      portions: [{ id: "normal", name: "Normal Porsiyon", price: 100 }],
+      name: "",
+      portions: [{ id: "normal", name: "", price: 0 }],
       drinkOptions: globalDrinks.map(d => ({ ...d, id: d.id || generateId() })),
       defaultDrinkId: globalDrinks[0]?.id || "ayran",
     };
@@ -108,7 +137,7 @@ function MenuDuzenleContent() {
     const drinks = menu.defaultDrinks || [...defaultDrinkOptions];
     drinks.push({
       id: generateId(),
-      name: "Yeni İçecek",
+      name: "",
       priceModifier: 0,
     });
     setMenu({ ...menu, defaultDrinks: drinks });
@@ -160,7 +189,7 @@ function MenuDuzenleContent() {
     const drinks = restaurants[restaurantIndex].drinks || [];
     drinks.push({
       id: generateId(),
-      name: "Yeni İçecek",
+      name: "",
       priceModifier: 0,
     });
     restaurants[restaurantIndex].drinks = drinks;
@@ -247,8 +276,8 @@ function MenuDuzenleContent() {
     const product = restaurants[restaurantIndex].products[productIndex];
     product.portions.push({
       id: generateId(),
-      name: "Yeni Porsiyon",
-      price: 100,
+      name: "",
+      price: 0,
     });
     setMenu({ ...menu, restaurants });
   };
@@ -288,7 +317,7 @@ function MenuDuzenleContent() {
     const product = restaurants[restaurantIndex].products[productIndex];
     product.drinkOptions.push({
       id: generateId(),
-      name: "Yeni İçecek",
+      name: "",
       priceModifier: 0,
     });
     setMenu({ ...menu, restaurants });
@@ -359,7 +388,7 @@ function MenuDuzenleContent() {
     if (!product.sauces) product.sauces = [];
     product.sauces.push({
       id: generateId(),
-      name: "Yeni Sos",
+      name: "",
       priceModifier: 0,
     });
     setMenu({ ...menu, restaurants });
@@ -399,7 +428,7 @@ function MenuDuzenleContent() {
     if (!product.extras) product.extras = [];
     product.extras.push({
       id: generateId(),
-      name: "Yeni Ekstra",
+      name: "",
       priceModifier: 0,
     });
     setMenu({ ...menu, restaurants });
@@ -453,12 +482,20 @@ function MenuDuzenleContent() {
       <header className="bg-blue-600 text-white py-4 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Menü Düzenle</h1>
-          <Link
-            href="/"
-            className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-          >
-            Geri Dön
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/siparisler"
+              className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              Genel Siparisler
+            </Link>
+            <Link
+              href="/"
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
+              Geri Don
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -938,6 +975,71 @@ function MenuDuzenleContent() {
         >
           + Yeni Restoran Ekle
         </button>
+
+        {/* Oneri Dashboard */}
+        {suggestions.length > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-4 mb-6 border border-purple-200">
+            <button
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💡</span>
+                <h2 className="text-lg font-bold text-purple-800">Gelen Oneriler</h2>
+                <span className="bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {suggestions.length}
+                </span>
+              </div>
+              <svg
+                className={`w-6 h-6 text-purple-600 transform transition-transform ${showSuggestions ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {showSuggestions && (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {suggestions.map((suggestion) => (
+                  <div
+                    key={suggestion.id}
+                    className="bg-white rounded-lg p-3 flex items-center justify-between gap-3 border border-purple-100"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm">
+                          {suggestion.type === "food" ? "🍕" : "🏪"}
+                        </span>
+                        <span className="font-medium text-gray-800">
+                          {suggestion.text}
+                        </span>
+                        <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
+                          👍 {suggestion.votes.length}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {suggestion.submittedBy} tarafindan - {new Date(suggestion.createdAt).toLocaleDateString("tr-TR")}
+                      </p>
+                      {suggestion.votes.length > 1 && (
+                        <p className="text-xs text-purple-600 mt-1">
+                          Oy verenler: {suggestion.votes.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteSuggestion(suggestion.id)}
+                      className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Kaydet Butonu */}
         <div className="sticky bottom-4">

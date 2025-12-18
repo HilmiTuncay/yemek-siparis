@@ -15,7 +15,7 @@ interface OrderFormProps {
 const USER_INFO_KEY = "yemek-siparis-user-info";
 
 export default function OrderForm({ menu, orderStatus }: OrderFormProps) {
-  const isOrdersClosed = orderStatus && !orderStatus.isOpen;
+  const isOrdersClosed = !!(orderStatus && !orderStatus.isOpen);
   const [customerName, setCustomerName] = useState("");
   // selections: { [restaurantId]: { [productId]: OrderItemSelection } }
   const [selections, setSelections] = useState<Record<string, Record<string, OrderItemSelection>>>({});
@@ -229,6 +229,7 @@ export default function OrderForm({ menu, orderStatus }: OrderFormProps) {
             onUpdateCart={(productId, sel) =>
               handleUpdateCart(restaurant.id, productId, sel)
             }
+            isOrdersClosed={isOrdersClosed}
           />
         ))}
 

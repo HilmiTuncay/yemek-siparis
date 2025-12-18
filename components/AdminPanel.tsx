@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 interface AdminPanelProps {
@@ -20,6 +20,26 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [suggestionCount, setSuggestionCount] = useState(0);
+
+  // Oneri sayisini yukle
+  const fetchSuggestionCount = useCallback(async () => {
+    try {
+      const response = await fetch("/api/oneriler");
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestionCount(data.suggestions?.length || 0);
+      }
+    } catch {
+      // Hata durumunda
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      fetchSuggestionCount();
+    }
+  }, [isOpen, isAuthenticated, fetchSuggestionCount]);
 
   if (!isOpen) return null;
 
@@ -127,6 +147,11 @@ export default function AdminPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               <span className="font-semibold text-blue-800">Menuyu Duzenle</span>
+              {suggestionCount > 0 && (
+                <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {suggestionCount} oneri
+                </span>
+              )}
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />

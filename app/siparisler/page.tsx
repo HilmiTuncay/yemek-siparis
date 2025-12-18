@@ -12,12 +12,20 @@ export default function SiparislerPage() {
         <header className="bg-green-600 text-white py-4 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <h1 className="text-2xl font-bold">Siparişler</h1>
-            <Link
-              href="/"
-              className="bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-50 transition-colors"
-            >
-              Sipariş Ver
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/menu-duzenle"
+                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+              >
+                Menuyu Duzenle
+              </Link>
+              <Link
+                href="/"
+                className="bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+              >
+                Siparis Ver
+              </Link>
+            </div>
           </div>
         </header>
 
